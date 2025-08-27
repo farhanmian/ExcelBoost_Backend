@@ -213,9 +213,13 @@ if (process.env.NODE_ENV === "production") {
 // Export the app for Vercel
 module.exports = app;
 
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
 // Only start the server if not in Vercel environment
-if (process.env.NODE_ENV !== "production" || !process.env.VERCEL) {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-}
+// if (process.env.NODE_ENV !== "production" || !process.env.VERCEL) {
+//   app.listen(PORT, () => {
+//     console.log(`Server running on port ${PORT}`);
+//   });
+// }
