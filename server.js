@@ -13,10 +13,12 @@ app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir);
+// Create uploads directory if it doesn't exist (skip on Vercel)
+if (!process.env.VERCEL) {
+  const uploadsDir = path.join(__dirname, "uploads");
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir);
+  }
 }
 
 // Configure multer for file uploads - use memory storage for Vercel
@@ -223,6 +225,16 @@ if (
     res.sendFile(path.join(__dirname, "client/build", "index.html"));
   });
 }
+
+// Add error handling middleware
+app.use((err, req, res, next) => {
+  console.error("Error:", err);
+  res.status(500).json({
+    error: "Internal Server Error",
+    message: err.message,
+    stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+  });
+});
 
 // Export the app for Vercel
 module.exports = app;
