@@ -134,17 +134,17 @@ When using the "Import JSON" feature, use this format:
 
 ```json
 {
-  "AGS FOODS INDIA PRIVATE LIMITED": {
-    "MOBILE NO": "9826671476",
-    "EMAIL ID": "piyush@agrawalglobal.com",
+  "Company Name 1": {
+    "MOBILE NO": "xxxxx",
+    "EMAIL ID": "xxx@xxx.com",
     "WEBSITE": "",
-    "ADDRESS": "Office No. 105, First Floor, Vibrant Business Tower, 9A-9B Manoramaganj, Geeta Bhawan, Indore, Madhya Pradesh – 452001, India"
+    "ADDRESS": "xxxx"
   },
-  "Aico Foods Limited": {
+  "Company Name 2": {
     "MOBILE NO": "",
-    "EMAIL ID": "info@aicofoods.com",
-    "WEBSITE": "http://aicofoods.com",
-    "ADDRESS": "44, Hirabhai Market, Diwan Lalubhai Road, Kankaria Road, Ahmedabad, Gujarat – 380022, India"
+    "EMAIL ID": "xxx@xxx.com",
+    "WEBSITE": "xxxx.com",
+    "ADDRESS": "xxxx"
   }
 }
 ```
