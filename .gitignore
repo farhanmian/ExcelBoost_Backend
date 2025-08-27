@@ -1,0 +1,22 @@
+/node_modules
+/client/node_modules
+/dist
+/build
+/public
+/src
+/test
+/docs
+/logs
+/cache
+/temp
+/uploads
+
+# Vercel
+.vercel
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
