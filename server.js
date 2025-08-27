@@ -39,6 +39,17 @@ const upload = multer({
 });
 
 // Routes
+app.get("/", (req, res) => {
+  res.json({
+    message: "Excel Data Processing API",
+    endpoints: {
+      test: "/api/test",
+      health: "/api/health",
+      processExcel: "/api/process-excel",
+    },
+  });
+});
+
 app.get("/api/test", (req, res) => {
   res.json({
     message: "Hello World",
@@ -201,8 +212,11 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Serve static files in production
-if (process.env.NODE_ENV === "production") {
+// Serve static files in production (only if client/build exists)
+if (
+  process.env.NODE_ENV === "production" &&
+  fs.existsSync(path.join(__dirname, "client/build"))
+) {
   app.use(express.static(path.join(__dirname, "client/build")));
 
   app.get("*", (req, res) => {
@@ -213,13 +227,9 @@ if (process.env.NODE_ENV === "production") {
 // Export the app for Vercel
 module.exports = app;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
 // Only start the server if not in Vercel environment
-// if (process.env.NODE_ENV !== "production" || !process.env.VERCEL) {
-//   app.listen(PORT, () => {
-//     console.log(`Server running on port ${PORT}`);
-//   });
-// }
+if (process.env.NODE_ENV !== "production" || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
