@@ -39,6 +39,12 @@ const upload = multer({
 });
 
 // Routes
+app.get("/api/test", (req, res) => {
+  res.json({
+    message: "Hello World",
+  });
+});
+
 app.post("/api/process-excel", upload.single("excelFile"), async (req, res) => {
   try {
     const { companyData, columnMappings } = req.body;
