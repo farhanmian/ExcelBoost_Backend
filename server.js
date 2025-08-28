@@ -82,15 +82,63 @@ app.post("/api/process-excel", upload.single("excelFile"), async (req, res) => {
     await workbook.xlsx.load(excelFile.buffer);
     const sheet = workbook.worksheets[0]; // first sheet
 
-    // Find column indexes by header name
-    const headerRow = sheet.getRow(1);
-    const colIndex = {};
-    headerRow.eachCell((cell, colNumber) => {
-      const headerValue = cell.value ? cell.value.toString().trim() : "";
-      if (headerValue) {
-        colIndex[headerValue] = colNumber;
+    // Find the actual header row by looking for expected column names
+    let headerRowNumber = 1;
+    let colIndex = {};
+
+    // Expected column patterns to identify the header row
+    const expectedColumns = [
+      "Company NAME",
+      "CONTACT PERSON",
+      "HALL no",
+      "STALL NO",
+      "Extra Number",
+      "L&LINE NO",
+    ];
+
+    // Search through first 10 rows to find the header row
+    for (let rowNum = 1; rowNum <= Math.min(10, sheet.rowCount); rowNum++) {
+      const testRow = sheet.getRow(rowNum);
+      const testColIndex = {};
+      let foundColumns = 0;
+
+      testRow.eachCell((cell, colNumber) => {
+        const headerValue = cell.value ? cell.value.toString().trim() : "";
+        if (headerValue) {
+          testColIndex[headerValue] = colNumber;
+          // Check if this matches any expected column (case insensitive)
+          if (
+            expectedColumns.some(
+              (expected) => expected.toLowerCase() === headerValue.toLowerCase()
+            )
+          ) {
+            foundColumns++;
+          }
+        }
+      });
+
+      // If we found at least 3 expected columns, this is likely the header row
+      if (foundColumns >= 3) {
+        headerRowNumber = rowNum;
+        colIndex = testColIndex;
+        console.log(`Found header row at row ${headerRowNumber}`);
+        console.log("Column mappings:", colIndex);
+        break;
       }
-    });
+    }
+
+    // If no clear header row found, default to row 1
+    if (Object.keys(colIndex).length === 0) {
+      console.log("No clear header row found, defaulting to row 1");
+      headerRowNumber = 1;
+      const headerRow = sheet.getRow(1);
+      headerRow.eachCell((cell, colNumber) => {
+        const headerValue = cell.value ? cell.value.toString().trim() : "";
+        if (headerValue) {
+          colIndex[headerValue] = colNumber;
+        }
+      });
+    }
 
     // Get the first company data to extract column names
     const firstCompanyName = Object.keys(parsedCompanyData)[0];
@@ -104,18 +152,31 @@ app.post("/api/process-excel", upload.single("excelFile"), async (req, res) => {
     console.log("Data columns from JSON:", dataColumns);
     console.log("Company name column:", companyNameColumn);
 
-    // Get font style from A2 (row 2, col 1) for consistency
-    const referenceCell = sheet.getRow(2).getCell(1);
+    // Get font style from the first data row after header for consistency
+    const firstDataRowNumber = headerRowNumber + 1;
+    const referenceCell = sheet.getRow(firstDataRowNumber).getCell(1);
     const referenceFont = referenceCell.font;
 
     // Loop through each row and update if company matches
     let updatedRows = 0;
     sheet.eachRow((row, rowNumber) => {
-      if (rowNumber === 1) return; // skip header
+      if (rowNumber <= headerRowNumber) return; // skip header and any rows above it
 
-      // Check if the company name column exists in the row
+      // Check if the company name column exists in the row (with flexible matching)
       const companyNameColumnName = parsedColumnMappings.companyNameColumn;
-      const companyNameColumnIndex = colIndex[companyNameColumnName];
+      let companyNameColumnIndex = colIndex[companyNameColumnName];
+
+      // If exact match not found, try case-insensitive matching
+      if (!companyNameColumnIndex) {
+        const lowerCaseTarget = companyNameColumnName.toLowerCase();
+        for (const [colName, colIdx] of Object.entries(colIndex)) {
+          if (colName.toLowerCase() === lowerCaseTarget) {
+            companyNameColumnIndex = colIdx;
+            break;
+          }
+        }
+      }
+
       if (!companyNameColumnIndex) {
         console.log(
           `Company name column "${companyNameColumnName}" not found in available columns:`,
@@ -144,7 +205,19 @@ app.post("/api/process-excel", upload.single("excelFile"), async (req, res) => {
 
         // Update each data column - only update if the value is not empty
         dataColumns.forEach((columnName) => {
-          const columnIndex = colIndex[columnName];
+          let columnIndex = colIndex[columnName];
+
+          // If exact match not found, try case-insensitive matching
+          if (!columnIndex) {
+            const lowerCaseTarget = columnName.toLowerCase();
+            for (const [colName, colIdx] of Object.entries(colIndex)) {
+              if (colName.toLowerCase() === lowerCaseTarget) {
+                columnIndex = colIdx;
+                break;
+              }
+            }
+          }
+
           const dataValue = data[columnName];
 
           console.log(
